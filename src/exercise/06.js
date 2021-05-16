@@ -26,6 +26,8 @@ const initialState = {
 function PokemonInfo({pokemonName}) {
   const [state, setState] = React.useState(initialState)
 
+  const {status, pokemon, error} = state
+
   React.useEffect(() => {
     if (!pokemonName) {
       setState(initialState)
@@ -51,25 +53,20 @@ function PokemonInfo({pokemonName}) {
       })
   }, [pokemonName])
 
-  if (state.status === statuses.idle) {
+  if (status === statuses.idle) {
     return 'Submit a pokemon'
   }
 
-  if (state.status === statuses.pending) {
+  if (status === statuses.pending) {
     return <PokemonInfoFallback name={pokemonName} />
   }
 
-  if (state.status === statuses.rejected) {
-    return (
-      <div role="alert">
-        There was an error:{' '}
-        <pre style={{whiteSpace: 'normal'}}>{state.error.message}</pre>
-      </div>
-    )
+  if (status === statuses.resolved) {
+    return <PokemonDataView pokemon={pokemon} />
   }
 
-  if (state.status === statuses.resolved) {
-    return <PokemonDataView pokemon={state.pokemon} />
+  if (status === statuses.rejected) {
+    throw error
   }
 
   throw new Error('this should be impossible!')
@@ -87,10 +84,35 @@ function App() {
       <PokemonForm pokemonName={pokemonName} onSubmit={handleSubmit} />
       <hr />
       <div className="pokemon-info">
-        <PokemonInfo pokemonName={pokemonName} />
+        <ErrorBoundary FallbackComponent={FallbackComponent}>
+          <PokemonInfo pokemonName={pokemonName} />
+        </ErrorBoundary>
       </div>
     </div>
   )
+}
+
+function FallbackComponent({error}) {
+  return (
+    <div role="alert">
+      There was an error:{' '}
+      <pre style={{whiteSpace: 'normal'}}>{error.message}</pre>
+    </div>
+  )
+}
+
+class ErrorBoundary extends React.Component {
+  state = {error: null}
+  static getDerivedStateFromError(error) {
+    return {error}
+  }
+  render() {
+    const {error} = this.state
+    if (error) {
+      return <this.props.FallbackComponent error={error} />
+    }
+    return this.props.children
+  }
 }
 
 export default App
