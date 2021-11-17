@@ -8,7 +8,7 @@ import {useLocalStorageState} from '../utils'
 function Board() {
   const [squares, setSquares] = useLocalStorageState(
     'squares',
-    JSON.parse(window.localStorage.getItem('squares')) || Array(9).fill(null),
+    Array(9).fill(null),
   )
 
   const nextValue = calculateNextValue(squares)
